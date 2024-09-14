@@ -4,3 +4,15 @@ NepFit is a fitness-focused eCommerce platform that offers a wide range of worko
 # Group S1G10
 
 - Saurav Shrestha
+
+
+# Data Source
+
+Single-user input
+
+# Features
+
+- Users have a splash screen when starting the app
+- Users can browse fitness apparel and equipment by categories 
+- Users can search for products through keywords
+- Users can filter products by brand, price range, and type.
