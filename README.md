@@ -4,6 +4,7 @@ NepFit is a fitness-focused eCommerce platform that offers a wide range of worko
 # Group S1G10
 
 - Saurav Shrestha
+- Sanam Chhetri
 
 
 # Data Source
