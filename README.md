@@ -21,3 +21,7 @@ Single-user input
 - ⁠⁠Users can add and remove products to a wish list
 - ⁠Users can add items to the shopping cart
 - ⁠Users can purchase products via the checkout process
+- Users can subscribe to monthly fitness gear boxes.
+- ⁠⁠Users can track their order history.
+- ⁠Users can upload images or videos with their product reviews and ratings.
+- ⁠Users can filter reviews by rating or keyword.
