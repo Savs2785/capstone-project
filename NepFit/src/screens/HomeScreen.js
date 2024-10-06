@@ -6,7 +6,7 @@ import globalStyles from '../styles/globalStyles';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { db } from '../firebase'; 
 import { collection, getDocs } from 'firebase/firestore';
-
+import { useWishlist } from '../WishlistContext'; 
 
 const images = [
   require('../../assets/sale1.jpg'),
@@ -19,17 +19,19 @@ const HomeScreen = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState(['All']);
+  const [categories, setCategories] = useState(['All']); // Initialize with 'All'
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [modalVisible, setModalVisible] = useState(false); // Modal visibility state
   const navigation = useNavigation();
+  const { addToWishlist } = useWishlist();
+
 
   const handleSearchChange = (text) => {
     setSearchQuery(text);
     console.log('Search Query:', text);
   };
 
-  // Rotating image effect
+
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentImageIndex(prevIndex => (prevIndex + 1) % images.length);
@@ -91,12 +93,18 @@ const HomeScreen = () => {
       <Text style={styles.productTitle}>{item.productName}</Text>
       <Text style={styles.productPrice}>Price: ${item.price}</Text>
       <Text style={styles.productStock}>In Stock: {item.noOfStock}</Text>
+      <TouchableOpacity 
+        style={styles.wishlistButton} 
+        onPress={() => addToWishlist(item)}
+      >
+        <Text style={styles.wishlistButtonText}>Add to Wishlist</Text>
+      </TouchableOpacity>
     </TouchableOpacity>
   );
 
   const handleCategorySelection = (category) => {
     setSelectedCategory(category);
-    setModalVisible(false); // Close modal after selection
+    setModalVisible(false); 
   };
 
   const resetCategorySelection = () => {
@@ -292,3 +300,4 @@ const styles = StyleSheet.create({
 });
 
 export default HomeScreen;
+

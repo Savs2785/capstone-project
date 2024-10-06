@@ -1,20 +1,34 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 
+
 const ProductDetailScreen = ({ route }) => {
   const { product } = route.params;
+
   const [isInCart, setIsInCart] = useState(false);
 
 
-
   const handleAddToCart = () => {
-    
+    if (isInCart) {
+      alert(`${product.productName} removed from cart!`);
+    } else {
+      alert(`${product.productName} added to cart!`);
+    }
   };
 
   return (
     <View style={styles.container}>
       <Image source={{ uri: product.imageUrl }} style={styles.image} />
-    
+       <Text style={styles.title}>{product.productName}</Text> 
+       <Text style={styles.description}>{product.description}</Text>
+      <Text style={styles.price}>Price: ${product.price}</Text> 
+      
+
+       {isInCart && (
+        <Text style={styles.quantityInCart}>
+          In Cart: {quantityInCart} {quantityInCart > 1 }
+        </Text>
+      )} 
 
 
       <TouchableOpacity style={styles.button} onPress={handleAddToCart}>
@@ -40,7 +54,25 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginBottom: 10,
   },
-
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginVertical: 5,
+  },
+  description: {
+    fontSize: 16,
+    marginVertical: 5,
+  },
+  price: {
+    fontSize: 20,
+    color: 'green',
+    marginVertical: 5,
+  },
+  quantityInCart: {
+    fontSize: 16,
+    marginVertical: 5,
+    color: 'blue',
+  },
   button: {
     backgroundColor: '#28a745',
     padding: 10,
