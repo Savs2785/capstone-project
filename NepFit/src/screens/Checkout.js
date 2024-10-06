@@ -1,8 +1,8 @@
-import React, { useState, useContext } from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, Button, TextInput, Alert } from 'react-native';
-import {useCart} from '../CartContext';
+import { useCart } from '../CartContext';
 
-const CheckoutScreens = () => {
+const CheckoutScreens = ({ navigation }) => {
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [cardNumber, setCardNumber] = useState('');
@@ -25,6 +25,8 @@ const CheckoutScreens = () => {
     },
   };
 
+  const { clearCart } = useCart();
+
   const handlePaymentOptionPress = (paymentType) => {
     setSelectedPayment(paymentType);
     setModalVisible(true);
@@ -35,8 +37,6 @@ const CheckoutScreens = () => {
       setCvv('');
     }
   };
-  const { clearCart } = useCart();
-
 
   const handleOrder = () => {
     if (selectedPayment === 'Credit/Debit Card') {
@@ -50,10 +50,12 @@ const CheckoutScreens = () => {
       Alert.alert('Order placed successfully!', `Payment method: ${selectedPayment}`);
     }
 
-   // Clear the cart after successful checkout
+    // Clear the cart after successful checkout
     clearCart();
 
-    setModalVisible(false); 
+    // Close modal and navigate to Home screen
+    setModalVisible(false);
+    navigation.navigate('Home');  // Navigate to Home screen after order
   };
 
   return (
@@ -70,7 +72,6 @@ const CheckoutScreens = () => {
           <Text style={styles.paymentText}>{paymentType}</Text>
         </TouchableOpacity>
       ))}
-
 
       <Modal
         animationType="slide"
