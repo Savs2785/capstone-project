@@ -1,17 +1,37 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
-
+import { useCart } from '../CartContext'; 
 
 const ProductDetailScreen = ({ route }) => {
   const { product } = route.params;
+  const { addToCart, removeFromCart, getCartItems } = useCart();
 
   const [isInCart, setIsInCart] = useState(false);
+  const [quantityInCart, setQuantityInCart] = useState(0); 
 
+  useEffect(() => {
+    const cartItems = getCartItems();
+    const existingItem = cartItems.find(item => item.id === product.id);
+    if (existingItem) {
+      setIsInCart(true);
+      setQuantityInCart(existingItem.quantity); 
+    } else {
+      setIsInCart(false);
+      setQuantityInCart(0); 
+    }
+  }, [getCartItems, product.id]);
 
   const handleAddToCart = () => {
     if (isInCart) {
+      removeFromCart(product);
+      setIsInCart(false);
+      setQuantityInCart(0); 
       alert(`${product.productName} removed from cart!`);
+
     } else {
+      addToCart({ ...product, quantity: 1 });
+      setIsInCart(true);
+      setQuantityInCart(1); 
       alert(`${product.productName} added to cart!`);
     }
   };
@@ -19,16 +39,16 @@ const ProductDetailScreen = ({ route }) => {
   return (
     <View style={styles.container}>
       <Image source={{ uri: product.imageUrl }} style={styles.image} />
-       <Text style={styles.title}>{product.productName}</Text> 
-       <Text style={styles.description}>{product.description}</Text>
-      <Text style={styles.price}>Price: ${product.price}</Text> 
+      <Text style={styles.title}>{product.productName}</Text>
+      <Text style={styles.description}>{product.description}</Text>
+      <Text style={styles.price}>Price: ${product.price}</Text>
       
 
-       {isInCart && (
+      {isInCart && (
         <Text style={styles.quantityInCart}>
           In Cart: {quantityInCart} {quantityInCart > 1 }
         </Text>
-      )} 
+      )}
 
 
       <TouchableOpacity style={styles.button} onPress={handleAddToCart}>
