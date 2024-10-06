@@ -1,5 +1,6 @@
 // HomeStack.js
 import React from 'react';
+import CheckoutScreens from '../screens/Checkout';
 import { createStackNavigator } from '@react-navigation/stack';
 import HomeScreen from '../screens/HomeScreen';
 import ProductDetailScreen from '../screens/ProductDetailScreen';
@@ -24,6 +25,11 @@ const HomeStack = () => {
                 name="Address"
                 component={AddressScreen}
                 options={{ title: 'Shipping Address' }}
+            />
+            <Stack.Screen
+                name="Checkout"
+                component={CheckoutScreens}
+                options={{ title: 'Checkout' }}
             />
         </Stack.Navigator>
     );
