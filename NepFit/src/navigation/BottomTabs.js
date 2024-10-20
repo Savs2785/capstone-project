@@ -1,11 +1,11 @@
-// BottomTabs.js
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import HomeStack from './HomeStack'; // Import your HomeStack
-import WishlistScreen from '../screens/WishlistScreen'; // Adjust the import path as needed
-import CartScreen from '../screens/CartScreen'; // Adjust the import path as needed
-import SettingsScreen from '../screens/SettingsScreen'; // Adjust the import path as needed
+import WishlistScreen from '../screens/WishlistScreen';
+import CartScreen from '../screens/CartScreen';
+import SettingsScreen from '../screens/SettingsScreen';
 import { Ionicons } from '@expo/vector-icons';
+import WishlistStack from './WishlistStack';
 
 const Tab = createBottomTabNavigator();
 
@@ -26,8 +26,8 @@ const BottomTabs = () => {
             case 'Cart':
               iconName = focused ? 'cart' : 'cart-outline';
               break;
-            case 'Settings':
-              iconName = focused ? 'settings' : 'settings-outline';
+            case 'Profile':
+              iconName = focused ? 'person' : 'person-outline'; 
               break;
             default:
               iconName = 'home';
@@ -42,23 +42,23 @@ const BottomTabs = () => {
     >
       <Tab.Screen
         name="Home"
-        component={HomeStack} // Use the HomeStack instead of HomeScreen
-        options={{ headerShown: false }} // Hide the header for Home
+        component={HomeStack}
+        options={{ headerShown: false }} 
       />
       <Tab.Screen
-        name="Wishlist"
-        component={WishlistScreen}
-        options={{ headerShown: false }} // Hide the header for Wishlist
+       name="Wishlist"  // Name this screen for navigating to the Wishlist flow
+       component={WishlistStack}  // Use WishlistStack here
+       options={{ headerShown: false }}
       />
       <Tab.Screen
         name="Cart"
         component={CartScreen}
-        options={{ headerShown: false }} // Hide the header for Cart
+        options={{ headerShown: false }} 
       />
       <Tab.Screen
-        name="Settings"
+        name="Profile"
         component={SettingsScreen}
-        options={{ headerShown: false }} // Hide the header for Settings
+        options={{ headerShown: false }} 
       />
     </Tab.Navigator>
   );

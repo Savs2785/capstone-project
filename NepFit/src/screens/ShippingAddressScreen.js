@@ -1,8 +1,8 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 
-const AddressScreen = ({ navigation }) => {
+const AddressScreen = ({ navigation, route }) => {
+  const { cartItems } = route.params;
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
   const [city, setCity] = useState('');
@@ -10,14 +10,17 @@ const AddressScreen = ({ navigation }) => {
   const [postalCode, setPostalCode] = useState('');
   const [phone, setPhone] = useState('');
 
+  useEffect(() => {
+    console.log('Cart Items:', cartItems.map(item => item.productName || item.imageUrl));
+  }, [cartItems]);
+
   const handleSubmit = () => {
     if (!name || !address || !city || !state || !postalCode || !phone) {
       Alert.alert("All fields are required", "Please fill out all fields.");
       return;
     }
-    navigation.navigate('Checkout');
+    navigation.navigate('Checkout', { cartItems, shippingDetails: { name, address, city, state, postalCode, phone } });
   };
-  
 
   return (
     <View style={styles.container}>

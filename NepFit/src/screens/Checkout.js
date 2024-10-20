@@ -38,10 +38,53 @@ const CheckoutScreens = ({ navigation }) => {
     }
   };
 
+
+  const validateCardNumber = (number) => {
+    const sanitizedNumber = number.replace(/\D/g, ''); 
+    if (sanitizedNumber.length < 13 || sanitizedNumber.length > 19) {
+      return false; 
+    }
+
+    let sum = 0;
+    let shouldDouble = false;
+
+    for (let i = sanitizedNumber.length - 1; i >= 0; i--) {
+      let digit = parseInt(sanitizedNumber[i]);
+
+      if (shouldDouble) {
+        digit *= 2;
+        if (digit > 9) {
+          digit -= 9;
+        }
+      }
+
+      sum += digit;
+      shouldDouble = !shouldDouble;
+    }
+
+    return sum % 10 === 0;
+  };
+
+
+  const validateCvv = (cvv) => {
+    const sanitizedCvv = cvv.replace(/\D/g, ''); 
+    return sanitizedCvv.length === 3 || sanitizedCvv.length === 4;
+  };
+
   const handleOrder = () => {
     if (selectedPayment === 'Credit/Debit Card') {
       if (!cardNumber || !cardHolder || !expiryDate || !cvv) {
         Alert.alert('Error', 'Please fill in all card details.');
+        return;
+      }
+
+      if (!validateCardNumber(cardNumber)) {
+        Alert.alert('Invalid Card Number', 'Please enter a valid credit card number.');
+        return;
+      }
+
+      if (!validateCvv(cvv)) {
+        Alert.alert('Invalid CVV', 'Please enter a valid CVV.');
         return;
       }
 
@@ -50,12 +93,11 @@ const CheckoutScreens = ({ navigation }) => {
       Alert.alert('Order placed successfully!', `Payment method: ${selectedPayment}`);
     }
 
-    // Clear the cart after successful checkout
     clearCart();
 
-    // Close modal and navigate to Home screen
+
     setModalVisible(false);
-    navigation.navigate('Home');  // Navigate to Home screen after order
+    navigation.navigate('Home'); 
   };
 
   return (
@@ -114,7 +156,7 @@ const CheckoutScreens = ({ navigation }) => {
                   value={cvv}
                   onChangeText={setCvv}
                   keyboardType="numeric"
-                  maxLength={3}
+                  maxLength={4}
                 />
               </>
             )}

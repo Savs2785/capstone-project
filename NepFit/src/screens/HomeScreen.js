@@ -6,6 +6,7 @@ import globalStyles from '../styles/globalStyles';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { db } from '../firebase';
 import { collection, getDocs } from 'firebase/firestore';
+import { useWishlist } from '../WishlistContext';
 import { ProductSearch } from '../ProductSearchContext';
 
 const images = [
@@ -24,6 +25,7 @@ const HomeScreen = () => {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [modalVisible, setModalVisible] = useState(false);
   const navigation = useNavigation();
+  const { addToWishlist } = useWishlist();
 
   const handleSearchChange = (text) => {
     setSearchQuery(text);
@@ -93,6 +95,7 @@ const HomeScreen = () => {
       <Text style={styles.productStock}>In Stock: {item.noOfStock}</Text>
       <TouchableOpacity
         style={styles.wishlistButton}
+        onPress={() => addToWishlist(item)}
       >
         <Text style={styles.wishlistButtonText}>Add to Wishlist</Text>
       </TouchableOpacity>
