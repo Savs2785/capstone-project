@@ -8,6 +8,7 @@ import { db } from '../firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import { useWishlist } from '../WishlistContext';
 import { ProductSearch } from '../ProductSearchContext';
+import { sortProducts } from '../SortContext';
 
 const images = [
   require('../../assets/sale1.jpg'),
@@ -24,6 +25,8 @@ const HomeScreen = () => {
   const [categories, setCategories] = useState(['All']);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [modalVisible, setModalVisible] = useState(false);
+  const [sortModalVisible, setSortModalVisible] = useState(false); 
+  const [sortCriteria, setSortCriteria] = useState('name'); 
   const navigation = useNavigation();
   const { addToWishlist } = useWishlist();
 
@@ -75,6 +78,7 @@ const HomeScreen = () => {
   );
 
   const filteredProducts = ProductSearch(products, searchQuery, selectedCategory);
+  const sortedProducts = sortProducts(filteredProducts, sortCriteria);
 
   const renderProduct = ({ item }) => (
     <TouchableOpacity
@@ -114,6 +118,11 @@ const HomeScreen = () => {
   const handleSuggestionPress = (item) => {
     setSearchQuery(item.productName);
     setSuggestions([]);
+  };
+
+  const handleSortSelection = (criteria) => {
+    setSortCriteria(criteria);
+    setSortModalVisible(false); // Close the sort modal
   };
 
   return (
@@ -162,6 +171,9 @@ const HomeScreen = () => {
           <TouchableOpacity onPress={selectedCategory === 'All' ? () => setModalVisible(true) : resetCategorySelection}>
             <Icon name={selectedCategory === 'All' ? "filter-list" : "close"} size={24} color="#000" />
           </TouchableOpacity>
+          <TouchableOpacity onPress={() => setSortModalVisible(true)}>
+            <Text style={styles.sortByText}>Sort By</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -194,9 +206,47 @@ const HomeScreen = () => {
         </View>
       </Modal>
 
-      {filteredProducts.length > 0 ? (
+      {/* Sort Selection Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={sortModalVisible}
+        onRequestClose={() => setSortModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalView}>
+            <Text style={styles.modalTitle}>Sort Products</Text>
+            <Pressable
+              style={styles.categoryOption}
+              onPress={() => handleSortSelection('name')}
+            >
+              <Text style={styles.categoryText}>By Name</Text>
+            </Pressable>
+            <Pressable
+              style={styles.categoryOption}
+              onPress={() => handleSortSelection('priceLowToHigh')}
+            >
+              <Text style={styles.categoryText}>Price: Low to High</Text>
+            </Pressable>
+            <Pressable
+              style={styles.categoryOption}
+              onPress={() => handleSortSelection('priceHighToLow')}
+            >
+              <Text style={styles.categoryText}>Price: High to Low</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.categoryOption, styles.cancelButton]}
+              onPress={() => setSortModalVisible(false)}
+            >
+              <Text style={styles.categoryText}>Cancel</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
+      {sortedProducts.length > 0 ? (
         <FlatList
-          data={filteredProducts}
+          data={sortedProducts}
           renderItem={renderProduct}
           keyExtractor={(item) => item.id}
           numColumns={2}
@@ -208,8 +258,7 @@ const HomeScreen = () => {
     </View>
   );
 };
-
-// Add the new style for clear button
+// Add the new style for clear button and sort by text
 const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
