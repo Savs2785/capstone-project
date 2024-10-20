@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, Button, TextInput, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, Button, TextInput, Alert, FlatList, Image } from 'react-native';
 import { useCart } from '../CartContext';
+import { useOrder } from '../OrderHistoryContext';
+import { CommonActions } from '@react-navigation/native';
 
-const CheckoutScreens = ({ navigation }) => {
+const CheckoutScreens = ({ navigation, route }) => {
+  const { cartItems, shippingDetails } = route.params;
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [cardNumber, setCardNumber] = useState('');
@@ -10,22 +13,8 @@ const CheckoutScreens = ({ navigation }) => {
   const [expiryDate, setExpiryDate] = useState('');
   const [cvv, setCvv] = useState('');
 
-  const paymentDetails = {
-    'Credit/Debit Card': {
-      title: 'Credit/Debit Card Payment',
-      info: 'Please enter your card details.',
-    },
-    'PayPal': {
-      title: 'PayPal Payment',
-      info: 'You will be redirected to PayPal to complete your payment securely.',
-    },
-    'Cash on Delivery': {
-      title: 'Cash on Delivery',
-      info: 'Please have the exact amount ready for the delivery person.',
-    },
-  };
-
   const { clearCart } = useCart();
+  const { addOrder } = useOrder();
 
   const handlePaymentOptionPress = (paymentType) => {
     setSelectedPayment(paymentType);
@@ -38,74 +27,65 @@ const CheckoutScreens = ({ navigation }) => {
     }
   };
 
-
-  const validateCardNumber = (number) => {
-    const sanitizedNumber = number.replace(/\D/g, ''); 
-    if (sanitizedNumber.length < 13 || sanitizedNumber.length > 19) {
-      return false; 
-    }
-
-    let sum = 0;
-    let shouldDouble = false;
-
-    for (let i = sanitizedNumber.length - 1; i >= 0; i--) {
-      let digit = parseInt(sanitizedNumber[i]);
-
-      if (shouldDouble) {
-        digit *= 2;
-        if (digit > 9) {
-          digit -= 9;
-        }
-      }
-
-      sum += digit;
-      shouldDouble = !shouldDouble;
-    }
-
-    return sum % 10 === 0;
-  };
-
-
-  const validateCvv = (cvv) => {
-    const sanitizedCvv = cvv.replace(/\D/g, ''); 
-    return sanitizedCvv.length === 3 || sanitizedCvv.length === 4;
-  };
-
   const handleOrder = () => {
     if (selectedPayment === 'Credit/Debit Card') {
       if (!cardNumber || !cardHolder || !expiryDate || !cvv) {
         Alert.alert('Error', 'Please fill in all card details.');
         return;
       }
-
-      if (!validateCardNumber(cardNumber)) {
-        Alert.alert('Invalid Card Number', 'Please enter a valid credit card number.');
-        return;
-      }
-
-      if (!validateCvv(cvv)) {
-        Alert.alert('Invalid CVV', 'Please enter a valid CVV.');
-        return;
-      }
-
-      Alert.alert('Order placed successfully!', 'Your payment has been processed.');
-    } else {
-      Alert.alert('Order placed successfully!', `Payment method: ${selectedPayment}`);
     }
-
+  
+    const orderDetails = {
+      paymentMethod: selectedPayment,
+      cardHolder: cardHolder,
+      cardNumber: cardNumber,
+      expiryDate: expiryDate,
+      cvv: cvv,
+      items: cartItems,
+      shippingDetails: shippingDetails,
+    };
+  
+    addOrder(orderDetails);
+    
+    Alert.alert('Order placed successfully!', `Payment method: ${selectedPayment}`);
+  
     clearCart();
-
-
+  
     setModalVisible(false);
-    navigation.navigate('Home'); 
+    
+    // Reset navigation stack and navigate to Profile screen with order details
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [
+          { name: 'Profile', params: { orderDetails } }, // Pass the order details
+        ],
+      })
+    );
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Checkout</Text>
-      <Text>Your order summary and payment options will be displayed here.</Text>
-      
-      {Object.keys(paymentDetails).map(paymentType => (
+
+      <FlatList
+  data={cartItems}
+  keyExtractor={(item) => item.id.toString()}
+  renderItem={({ item }) => {
+    return (
+      <View style={styles.cartItem}>
+        <Image source={{ uri: item.imageUrl }} style={styles.productImage} />
+        <View style={styles.productDetails}>
+          <Text>{item.productName}</Text>
+          <Text>Quantity: {item.quantity}</Text>
+        </View>
+      </View>
+    );
+  }}
+/>
+
+
+      {['Credit/Debit Card', 'PayPal', 'Cash on Delivery'].map(paymentType => (
         <TouchableOpacity 
           key={paymentType}
           style={styles.paymentOption} 
@@ -125,9 +105,9 @@ const CheckoutScreens = ({ navigation }) => {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>{paymentDetails[selectedPayment]?.title}</Text>
-            <Text style={styles.modalInfo}>{paymentDetails[selectedPayment]?.info}</Text>
-            
+            <Text style={styles.modalTitle}>{`${selectedPayment} Payment`}</Text>
+            <Text style={styles.modalInfo}>Please enter your payment details.</Text>
+
             {selectedPayment === 'Credit/Debit Card' && (
               <>
                 <TextInput
@@ -156,7 +136,7 @@ const CheckoutScreens = ({ navigation }) => {
                   value={cvv}
                   onChangeText={setCvv}
                   keyboardType="numeric"
-                  maxLength={4}
+                  maxLength={3}
                 />
               </>
             )}
@@ -181,6 +161,20 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
+  },
+  cartItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 5,
+  },
+  productImage: {
+    width: 50,
+    height: 50,
+    marginRight: 10,
+    borderRadius: 5,
+  },
+  productDetails: {
+    flex: 1,
   },
   paymentOption: {
     padding: 15,

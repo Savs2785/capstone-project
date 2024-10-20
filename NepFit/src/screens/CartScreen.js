@@ -48,7 +48,7 @@ const CartScreen = ({ navigation }) => {
   );
 
   const handleCheckout = () => {
-    navigation.navigate('Address'); 
+    navigation.navigate('Address', { cartItems }); 
   };
 
   return (
