@@ -18,9 +18,11 @@ const ProductDetailScreen = ({ route }) => {
   const [reviewImage, setReviewImage] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [user, setUser] = useState(null);
+  const [selectedRatingFilter, setSelectedRatingFilter] = useState(null);
   const [usersMap, setUsersMap] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [keyword, setKeyword] = useState(''); // State for keyword filter
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (authUser) => {
@@ -90,9 +92,12 @@ const ProductDetailScreen = ({ route }) => {
       }
     } catch (error) {
       console.error('Error picking image:', error);
-      Alert.alert('Error picking image. Please try again.');
     }
   };
+
+  
+  
+  
 
   const handleSubmitReview = async () => {
     if (!reviewText.trim()) return Alert.alert('Please write a review!');
@@ -148,6 +153,13 @@ const ProductDetailScreen = ({ route }) => {
     }
   };
 
+  const filteredReviews = reviews.filter((review) => {
+    const matchesRating = selectedRatingFilter === null || review.rating === selectedRatingFilter;
+    const matchesKeyword =
+      !keyword || review.reviewText.toLowerCase().includes(keyword.toLowerCase()); // Filter by keyword
+    return matchesRating && matchesKeyword;
+  });
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.content}>
@@ -170,7 +182,7 @@ const ProductDetailScreen = ({ route }) => {
         </View>
 
         <TextInput
-          style={[styles.textInput, { minHeight: 100, textAlignVertical: 'top' }]}
+          style={[styles.textInput, ]}
           placeholder="Write your review"
           multiline
           value={reviewText}
@@ -186,6 +198,30 @@ const ProductDetailScreen = ({ route }) => {
           <Text style={styles.buttonText}>Submit Review</Text>
         </TouchableOpacity>
 
+        <Text style={styles.filterLabel}>Filter by Rating:</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterContainer}>
+          <TouchableOpacity
+            style={[styles.filterButton, selectedRatingFilter === null && styles.selectedFilterButton]}
+            onPress={() => setSelectedRatingFilter(null)}
+          >
+            <Text style={styles.filterButtonText}>All</Text>
+          </TouchableOpacity>
+          {[1, 2, 3, 4, 5].map((star) => (
+            <TouchableOpacity
+              key={star}
+              style={[styles.filterButton, selectedRatingFilter === star && styles.selectedFilterButton]}
+              onPress={() => setSelectedRatingFilter(star === selectedRatingFilter ? null : star)}
+            >
+              <Text style={styles.filterButtonText}>{star} Stars</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+        <TextInput
+          style={styles.textInput}
+          placeholder="Search reviews by keyword"
+          value={keyword}
+          onChangeText={setKeyword}
+        />
         <Text style={styles.reviewsTitle}>Reviews</Text>
         {loading ? (
           <ActivityIndicator size="large" color="#0000ff" />
@@ -193,7 +229,7 @@ const ProductDetailScreen = ({ route }) => {
           <Text style={styles.errorText}>{error}</Text>
         ) : (
           <ScrollView style={styles.reviewsList}>
-            {reviews.map((review) => (
+            {filteredReviews.map((review) => (
               <View key={review.reviewId} style={styles.reviewCard}>
                 <Text style={styles.reviewUser}>{usersMap[review.userId] || 'Unknown User'}</Text>
                 <Text style={styles.reviewRating}>Rating: {review.rating} ★</Text>
@@ -227,17 +263,30 @@ const styles = StyleSheet.create({
   },
   productImage: { width: '100%', height: 300, resizeMode: 'contain' },
   textInput: { borderWidth: 1, borderColor: '#ccc', padding: 10, marginVertical: 10 },
-  reviewImage: { width: 100, height: 100, resizeMode: 'cover', marginVertical: 10 },
-  ratingLabel: { fontSize: 16, marginVertical: 10 },
-  ratingContainer: { flexDirection: 'row' },
-  filledStar: { color: '#FFD700', fontSize: 30 },
+  reviewImage: { width: 100, height: 100, resizeMode: 'contain', marginTop: 10 },
+  ratingLabel: { fontSize: 16, marginTop: 10 },
+  ratingContainer: { flexDirection: 'row', marginVertical: 10 },
+  filledStar: { color: '#f5b041', fontSize: 30 },
   emptyStar: { color: '#ccc', fontSize: 30 },
-  reviewsTitle: { fontSize: 20, fontWeight: 'bold', marginVertical: 20 },
-  reviewsList: { marginTop: 10 },
-  reviewCard: { marginBottom: 15 },
-  reviewUser: { fontWeight: 'bold', fontSize: 16 },
-  reviewRating: { color: '#FFD700' },
-  reviewText: { fontSize: 16 },
+  reviewsTitle: { fontSize: 20, fontWeight: 'bold', marginTop: 20 },
+  reviewsList: { marginVertical: 10 },
+  reviewCard: { marginBottom: 20, padding: 10, borderWidth: 1, borderColor: '#ccc', borderRadius: 5 },
+  reviewUser: { fontSize: 16, fontWeight: 'bold' },
+  reviewRating: { fontSize: 14, marginVertical: 5 },
+  reviewText: { fontSize: 14 },
+  filterLabel: { fontSize: 16, marginVertical: 10 },
+  filterContainer: { flexDirection: 'row', marginVertical: 10 },
+  filterButton: {
+    backgroundColor: '#f5f5f5',
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 5,
+    marginRight: 10,
+  },
+  selectedFilterButton: {
+    backgroundColor: '#007bff',
+  },
+  filterButtonText: { color: '#007bff', fontSize: 14 },
   errorText: { color: 'red', fontSize: 16 },
 });
 
