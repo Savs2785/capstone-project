@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, Button, TextInput, Alert, FlatList, Image } from 'react-native';
 import { useCart } from '../CartContext';
 import { useOrder } from '../OrderHistoryContext';
 import { CommonActions } from '@react-navigation/native';
+import { getFirestore, collection, query, where, getDocs } from 'firebase/firestore';
 
 const CheckoutScreens = ({ navigation, route }) => {
   const { cartItems, shippingDetails } = route.params;
@@ -12,9 +13,12 @@ const CheckoutScreens = ({ navigation, route }) => {
   const [cardHolder, setCardHolder] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
   const [cvv, setCvv] = useState('');
-
+  const [discountCode, setDiscountCode] = useState('');
+  const [discountAmount, setDiscountAmount] = useState(0);
   const { clearCart } = useCart();
   const { addOrder } = useOrder();
+  const totalAmount = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+  const finalAmount = totalAmount - discountAmount;
 
   const handlePaymentOptionPress = (paymentType) => {
     setSelectedPayment(paymentType);
@@ -27,6 +31,24 @@ const CheckoutScreens = ({ navigation, route }) => {
     }
   };
 
+  const checkDiscountCode = async () => {
+    const db = getFirestore();
+    const discountsRef = collection(db, 'discounts');
+
+    const querySnapshot = await getDocs(query(discountsRef, where('code', '==', discountCode), where('isValid', '==', true)));
+
+    if (!querySnapshot.empty) {
+      const discountData = querySnapshot.docs[0].data();
+      const discountPercentage = discountData.discountPercentage;
+      const discount = (totalAmount * discountPercentage) / 100;
+      setDiscountAmount(discount);
+      Alert.alert('Discount Applied', `You saved ${discountPercentage}%!`);
+    } else {
+      Alert.alert('Invalid Discount Code', 'The discount code is not valid or expired.');
+      setDiscountAmount(0);
+    }
+  };
+
   const handleOrder = () => {
     if (selectedPayment === 'Credit/Debit Card') {
       if (!cardNumber || !cardHolder || !expiryDate || !cvv) {
@@ -34,7 +56,7 @@ const CheckoutScreens = ({ navigation, route }) => {
         return;
       }
     }
-  
+
     const orderDetails = {
       paymentMethod: selectedPayment,
       cardHolder: cardHolder,
@@ -43,22 +65,24 @@ const CheckoutScreens = ({ navigation, route }) => {
       cvv: cvv,
       items: cartItems,
       shippingDetails: shippingDetails,
+      totalAmount: totalAmount,
+      discountAmount: discountAmount,
+      finalAmount: finalAmount,
     };
-  
+
     addOrder(orderDetails);
-    
-    Alert.alert('Order placed successfully!', `Payment method: ${selectedPayment}`);
-  
+
+    Alert.alert('Order placed successfully!', `Payment method: ${selectedPayment}, Total: $${finalAmount.toFixed(2)}`);
+
     clearCart();
-  
+
     setModalVisible(false);
-    
-    // Reset navigation stack and navigate to Profile screen with order details
+
     navigation.dispatch(
       CommonActions.reset({
         index: 0,
         routes: [
-          { name: 'Profile', params: { orderDetails } }, // Pass the order details
+          { name: 'Profile', params: { orderDetails } },
         ],
       })
     );
@@ -69,26 +93,42 @@ const CheckoutScreens = ({ navigation, route }) => {
       <Text style={styles.title}>Checkout</Text>
 
       <FlatList
-  data={cartItems}
-  keyExtractor={(item) => item.id.toString()}
-  renderItem={({ item }) => {
-    return (
-      <View style={styles.cartItem}>
-        <Image source={{ uri: item.imageUrl }} style={styles.productImage} />
-        <View style={styles.productDetails}>
-          <Text>{item.productName}</Text>
-          <Text>Quantity: {item.quantity}</Text>
-        </View>
-      </View>
-    );
-  }}
-/>
+        data={cartItems}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={({ item }) => (
+          <View style={styles.cartItem}>
+            <Image source={{ uri: item.imageUrl }} style={styles.productImage} />
+            <View style={styles.productDetails}>
+              <Text>{item.productName}</Text>
+              <Text>Quantity: {item.quantity}</Text>
+            </View>
+          </View>
+        )}
+      />
 
+      <TextInput
+        placeholder="Enter Discount Code"
+        style={styles.input}
+        value={discountCode}
+        onChangeText={setDiscountCode}
+      />
+      <TouchableOpacity
+        style={styles.paymentOption}
+        onPress={checkDiscountCode}
+      >
+        <Text style={styles.paymentText}>Apply Discount</Text>
+      </TouchableOpacity>
+
+      <Text style={styles.priceText}>Total: ${totalAmount.toFixed(2)}</Text>
+      {discountAmount > 0 && (
+        <Text style={styles.priceText}>Discount Applied: -${discountAmount.toFixed(2)}</Text>
+      )}
+      <Text style={styles.priceText}>Final Total: ${finalAmount.toFixed(2)}</Text>
 
       {['Credit/Debit Card', 'PayPal', 'Cash on Delivery'].map(paymentType => (
-        <TouchableOpacity 
+        <TouchableOpacity
           key={paymentType}
-          style={styles.paymentOption} 
+          style={styles.paymentOption}
           onPress={() => handlePaymentOptionPress(paymentType)}
         >
           <Text style={styles.paymentText}>{paymentType}</Text>
@@ -99,9 +139,7 @@ const CheckoutScreens = ({ navigation, route }) => {
         animationType="slide"
         transparent={true}
         visible={modalVisible}
-        onRequestClose={() => {
-          setModalVisible(!modalVisible);
-        }}
+        onRequestClose={() => setModalVisible(!modalVisible)}
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
@@ -128,7 +166,7 @@ const CheckoutScreens = ({ navigation, route }) => {
                   style={styles.input}
                   value={expiryDate}
                   onChangeText={setExpiryDate}
-                  maxLength={5} 
+                  maxLength={5}
                 />
                 <TextInput
                   placeholder="CVV"
@@ -176,14 +214,29 @@ const styles = StyleSheet.create({
   productDetails: {
     flex: 1,
   },
+
   paymentOption: {
-    padding: 15,
-    backgroundColor: '#f0f0f0',
+    paddingVertical: 15,
+    paddingHorizontal: 20, 
+    backgroundColor: '#007bff', 
     borderRadius: 5,
     marginVertical: 10,
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    width: '70%', 
+    maxWidth: 250, 
+    shadowColor: '#000', 
+    shadowOffset: { width: 0, height: 4 }, 
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 5,
+    alignSelf: 'center', 
   },
+
+
   paymentText: {
     fontSize: 18,
+    color: '#fff'
   },
   modalContainer: {
     flex: 1,
@@ -219,6 +272,11 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 15,
     width: '100%',
+  },
+  priceText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginVertical: 10,
   },
 });
 
