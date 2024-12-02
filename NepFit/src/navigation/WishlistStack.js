@@ -9,7 +9,7 @@ const WishlistStack = () => {
   return (
     <Stack.Navigator>
       <Stack.Screen 
-        name="Wishlist" 
+        name="wishlist" 
         component={WishlistScreen} 
         options={{ headerShown: false }}
       />
