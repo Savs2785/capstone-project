@@ -63,6 +63,7 @@ const HomeScreen = () => {
       const uniqueCategories = [...new Set(productList.map(product => product.categories))];
       setCategories(['All', ...uniqueCategories]);
     } catch (error) {
+      console.error('Error fetching products:', error);
     }
   };
 

@@ -66,6 +66,7 @@ const Header = ({ userImage }) => {
       });
       setNotificationId(id);
       Alert.alert('Notification Scheduled', 'You will get notified in 1 minute.');
+      console.log('Notification scheduled with ID:', id); // Log the notification ID
     } catch (error) {
       console.error('Failed to schedule notification:', error);
       Alert.alert('Error', 'Failed to schedule notification');
@@ -77,6 +78,7 @@ const Header = ({ userImage }) => {
       try {
         await Notifications.cancelScheduledNotificationAsync(notificationId);
         Alert.alert('Notification Canceled', 'Previous notification was canceled.');
+        console.log('Notification canceled with ID:', notificationId); // Log cancellation
       } catch (error) {
         console.error('Failed to cancel notification:', error);
       }

@@ -7,7 +7,6 @@ import globalStyles from '../styles/globalStyles';
 import { useOrder } from '../OrderHistoryContext';
 import { useNavigation } from '@react-navigation/native';
 import { Linking } from 'react-native';
-import { ScrollView } from 'react-native-gesture-handler';
 
 const SettingsScreen = () => {
   const [userData, setUserData] = useState(null);
@@ -45,9 +44,11 @@ const SettingsScreen = () => {
             setAge(data.age);
             setSelectedPlan(data.selectedPlan || null);
           } else {
+            console.error('No user data found');
           }
         }
       } catch (error) {
+        console.error('Error fetching user data:', error);
       } finally {
         setLoading(false);
       }
@@ -76,6 +77,7 @@ const SettingsScreen = () => {
           alert('Profile updated successfully!');
         }
       } catch (error) {
+        console.error('Error updating profile:', error);
         alert('Error updating profile.');
       } finally {
         setLoading(false);
@@ -110,8 +112,8 @@ const SettingsScreen = () => {
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      navigation.navigate('Login');
     } catch (error) {
+      console.error('Error logging out:', error);
       alert('Error logging out.');
     }
   };
@@ -121,220 +123,219 @@ const SettingsScreen = () => {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.scrollContainer}>
-      <View style={globalStyles.container}>
-        <Header />
-        <Text style={styles.screenText}>Your Profile</Text>
-        {userData && (
-          <View style={styles.profileContainer}>
-            <Text>Name: {userData.name}</Text>
-            <Text>Email: {userData.email}</Text>
-            <Text>Age: {userData.age}</Text>
-            {selectedPlan && (
-              <Text style={styles.subscriptionBadge}>{selectedPlan} Member</Text>
+    <View style={globalStyles.container}>
+      <Header />
+      <Text style={styles.screenText}>Your Profile</Text>
+      {userData && (
+        <View style={styles.profileContainer}>
+          <Text>Name: {userData.name}</Text>
+          <Text>Email: {userData.email}</Text>
+          <Text>Age: {userData.age}</Text>
+          {selectedPlan && (
+            <Text style={styles.subscriptionBadge}>{selectedPlan} Member</Text>
+          )}
+        </View>
+      )}
+
+      <TouchableOpacity style={styles.updateButton} onPress={() => setIsModalVisible(true)}>
+        <Text style={styles.buttonText}>Update Profile</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+        <Text style={styles.buttonText}>Logout</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.subscriptionButton} onPress={() => setIsSubscriptionModalVisible(true)}>
+        <Text style={styles.buttonText}>Subscribe to a Plan</Text>
+      </TouchableOpacity>
+
+      <Text style={styles.screenText}>Your Orders</Text>
+      <FlatList
+        data={orders.length > 0 ? orders : [{ paymentMethod: 'Debit/Credit Card', items: [] }]}  // Check if orders are available
+        keyExtractor={(item, index) => index.toString()}
+        renderItem={({ item }) => (
+          <View style={styles.orderContainer}>
+            <Text style={styles.paymentMethodText}>Payment Method: {item.paymentMethod}</Text>
+            {item.paymentMethod === 'Credit/Debit Card' && (
+              <>
+                <Text>Cardholder Name: {item.cardHolder}</Text>
+                <Text>Card Number: **** **** **** {item.cardNumber.slice(-4)}</Text>
+                <Text>Expiry Date: {item.expiryDate}</Text>
+              </>
             )}
+
+            <FlatList
+              data={item.items}
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={({ item }) => (
+                <View style={styles.cartItem}>
+                  <Image source={{ uri: item.imageUrl }} style={styles.productImage} />
+                  <View style={styles.productDetails}>
+                    <Text style={styles.productName}>{item.productName}</Text>
+                    <Text style={{ fontSize: 12 }}>Quantity: {item.quantity}</Text>
+                  </View>
+                </View>
+              )}
+            />
+
+            {orders.length === 0 ? (
+              <>
+                <Text style={styles.giftBoxText}>
+                  {selectedPlan === 'Basic' && 'Basic Order Box'}
+                  {selectedPlan === 'Elite' && 'Elite Order Box'}
+                  {selectedPlan === 'VIP' && 'VIP Order Box'}
+                </Text>
+                <Text style={styles.giftSemiBoxText}>
+                  {selectedPlan === 'Basic' && 'You will not get a discount as Basic member.'}
+                  {selectedPlan === 'Elite' && 'You will get a 10% discount as Elite member.'}
+                  {selectedPlan === 'VIP' && 'You will get a 15% discount as VIP member.'}
+                </Text>
+              </>
+            ) : null}
           </View>
         )}
+      />
 
-        <TouchableOpacity style={styles.updateButton} onPress={() => setIsModalVisible(true)}>
-          <Text style={styles.buttonText}>Update Profile</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.subscriptionButton} onPress={() => setIsSubscriptionModalVisible(true)}>
-          <Text style={styles.buttonText}>Subscribe to a Plan</Text>
-        </TouchableOpacity>
-
-        <Text style={styles.screenText}>Your Orders</Text>
-        <FlatList
-          data={orders.length > 0 ? orders : [{ paymentMethod: 'Debit/Credit Card', items: [] }]}  // Check if orders are available
-          keyExtractor={(item, index) => index.toString()}
-          renderItem={({ item }) => (
-            <View style={styles.orderContainer}>
-              <Text style={styles.paymentMethodText}>Payment Method: {item.paymentMethod}</Text>
-              {item.paymentMethod === 'Credit/Debit Card' && (
-                <>
-                  <Text>Cardholder Name: {item.cardHolder}</Text>
-                  <Text>Card Number: **** **** **** {item.cardNumber.slice(-4)}</Text>
-                  <Text>Expiry Date: {item.expiryDate}</Text>
-                </>
-              )}
-
-              <FlatList
-                data={item.items}
-                keyExtractor={(item) => item.id.toString()}
-                renderItem={({ item }) => (
-                  <View style={styles.cartItem}>
-                    <Image source={{ uri: item.imageUrl }} style={styles.productImage} />
-                    <View style={styles.productDetails}>
-                      <Text style={styles.productName}>{item.productName}</Text>
-                      <Text style={{ fontSize: 12 }}>Quantity: {item.quantity}</Text>
-                    </View>
-                  </View>
-                )}
-              />
-
-              {orders.length === 0 ? (
-                <>
-                  <Text style={styles.giftBoxText}>
-                    {selectedPlan === 'Basic' && 'Basic Order Box'}
-                    {selectedPlan === 'Elite' && 'Elite Order Box'}
-                    {selectedPlan === 'VIP' && 'VIP Order Box'}
-                  </Text>
-                  <Text style={styles.giftSemiBoxText}>
-                    {selectedPlan === 'Basic' && 'You will not get a discount as Basic member.'}
-                    {selectedPlan === 'Elite' && 'You will get a 10% discount as Elite member.'}
-                    {selectedPlan === 'VIP' && 'You will get a 15% discount as VIP member.'}
-                  </Text>
-                </>
-              ) : null}
-            </View>
-          )}
-        />
-
-        {/* Tutorials Section */}
-        <Text style={styles.screenText}>Tutorials</Text>
-        <FlatList
-          data={[
-            { title: 'How to use dumbbells', imageUrl: require('../../assets/dumbell.jpg'), url: 'https://www.youtube.com/watch?v=byGit7i8Dmo' },
-            { title: 'How to use protein powder', imageUrl: require('../../assets/powder.jpg'), url: 'https://www.youtube.com/watch?v=42PTdcxTfpc' },
-            { title: 'How to use a rubber resistance band', imageUrl: require('../../assets/resistance.jpeg'), url: 'https://www.youtube.com/watch?v=GMMsCZ-fynI' },
-          ]}
-          keyExtractor={(item, index) => index.toString()}
-          renderItem={({ item }) => (
-            <View style={styles.tutorialContainer}>
-              <TouchableOpacity
-                style={styles.imageContainer}
-                onPress={() => {
-                  Linking.openURL(item.url).catch((err) => console.error('Error opening URL:', err));
-                }}
-              >
-                <View style={styles.rowContainer}>
-                  <Image
-                    source={item.imageUrl}
-                    style={styles.imageStyle}
-                  />
-                  <Text style={styles.tutorialText}>{item.title}</Text>
-                </View>
-              </TouchableOpacity>
-            </View>
-          )}
-        />
-
-
-        <Modal
-          visible={isModalVisible}
-          animationType="slide"
-          transparent={true}
-          onRequestClose={() => setIsModalVisible(false)}
-        >
-          <View style={styles.modalBackground}>
-            <View style={styles.modalContainer}>
-              <Text style={styles.modalTitle}>Update Profile</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Name"
-                value={name}
-                onChangeText={setName}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Email"
-                value={email}
-                onChangeText={setEmail}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Age"
-                value={age}
-                onChangeText={setAge}
-              />
-              <View style={styles.modalActions}>
-                <TouchableOpacity style={styles.cancelButton} onPress={() => setIsModalVisible(false)}>
-                  <Text style={styles.buttonText}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.saveButton} onPress={handleUpdateProfile}>
-                  <Text style={styles.buttonText}>Save</Text>
-                </TouchableOpacity>
+      {/* Tutorials Section */}
+      <Text style={styles.screenText}>Tutorials</Text>
+      <FlatList
+        data={[
+          { title: 'How to use dumbbells', imageUrl: require('../../assets/dumbell.jpg'), url: 'https://www.youtube.com/watch?v=byGit7i8Dmo' },
+          { title: 'How to use protein powder', imageUrl: require('../../assets/powder.jpg'), url: 'https://www.youtube.com/watch?v=42PTdcxTfpc' },
+          { title: 'How to use a rubber resistance band', imageUrl: require('../../assets/resistance.jpeg'), url: 'https://www.youtube.com/watch?v=GMMsCZ-fynI' },
+        ]}
+        keyExtractor={(item, index) => index.toString()}
+        renderItem={({ item }) => (
+          <View style={styles.tutorialContainer}>
+            <TouchableOpacity
+              style={styles.imageContainer}
+              onPress={() => {
+                Linking.openURL(item.url).catch((err) => console.error('Error opening URL:', err));
+              }}
+            >
+              <View style={styles.rowContainer}>
+                <Image
+                  source={item.imageUrl}
+                  style={styles.imageStyle}
+                />
+                <Text style={styles.tutorialText}>{item.title}</Text>
               </View>
-            </View>
+            </TouchableOpacity>
           </View>
-        </Modal>
+        )}
+      />
 
-        <Modal
-          visible={isSubscriptionModalVisible}
-          animationType="slide"
-          transparent={true}
-          onRequestClose={() => setIsSubscriptionModalVisible(false)}
-        >
-          <View style={styles.modalBackground}>
-            <View style={styles.modalContainer}>
-              <Text style={styles.modalTitle}>Select a Subscription Plan</Text>
+      <Modal
+        visible={isModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setIsModalVisible(false)}
+      >
+        <View style={styles.modalBackground}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Update Profile</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Name"
+              value={name}
+              onChangeText={setName}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Email"
+              value={email}
+              onChangeText={setEmail}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Age"
+              value={age}
+              onChangeText={setAge}
+              keyboardType="numeric"
+            />
+            <TouchableOpacity style={styles.button} onPress={handleUpdateProfile}>
+              <Text style={styles.buttonText}>Save</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={() => setIsModalVisible(false)}
+            >
+              <Text style={styles.buttonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
+      <Modal
+        visible={isSubscriptionModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setIsSubscriptionModalVisible(false)}
+      >
+        <View style={styles.modalBackground}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Subscription Payment</Text>
+            <Text style={styles.modalText}>Select your plan</Text>
+            <View style={styles.planContainer}>
               <TouchableOpacity
-                style={[styles.planButton, selectedPlan === 'Basic' && styles.selectedPlan]}
+                style={selectedPlan === 'Basic' ? styles.selectedPlanButton : styles.planButton}
                 onPress={() => setSelectedPlan('Basic')}
               >
-                <Text style={styles.planText}>Basic</Text>
+                <Text style={styles.planButtonText}>Basic Plan</Text>
               </TouchableOpacity>
-
               <TouchableOpacity
-                style={[styles.planButton, selectedPlan === 'Elite' && styles.selectedPlan]}
+                style={selectedPlan === 'Elite' ? styles.selectedPlanButton : styles.planButton}
                 onPress={() => setSelectedPlan('Elite')}
               >
-                <Text style={styles.planText}>Elite</Text>
+                <Text style={styles.planButtonText}>Elite Plan</Text>
               </TouchableOpacity>
-
               <TouchableOpacity
-                style={[styles.planButton, selectedPlan === 'VIP' && styles.selectedPlan]}
+                style={selectedPlan === 'VIP' ? styles.selectedPlanButton : styles.planButton}
                 onPress={() => setSelectedPlan('VIP')}
               >
-                <Text style={styles.planText}>VIP</Text>
+                <Text style={styles.planButtonText}>VIP Plan</Text>
               </TouchableOpacity>
-
-              <TextInput
-                style={styles.input}
-                placeholder="Cardholder Name"
-                value={cardHolder}
-                onChangeText={setCardHolder}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Card Number"
-                value={cardNumber}
-                onChangeText={setCardNumber}
-                keyboardType="numeric"
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Expiry Date (MM/YY)"
-                value={expiryDate}
-                onChangeText={setExpiryDate}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="CVV"
-                value={cvv}
-                onChangeText={setCvv}
-                secureTextEntry
-              />
-
-              <View style={styles.modalActions}>
-                <TouchableOpacity style={styles.cancelButton} onPress={() => setIsSubscriptionModalVisible(false)}>
-                  <Text style={styles.buttonText}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.saveButton} onPress={handleSubscriptionPayment}>
-                  <Text style={styles.buttonText}>Subscribe</Text>
-                </TouchableOpacity>
-              </View>
             </View>
-          </View>
-        </Modal>
 
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Text style={styles.buttonText}>Logout</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+            <TextInput
+              style={styles.input}
+              placeholder="Cardholder Name"
+              value={cardHolder}
+              onChangeText={setCardHolder}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Card Number"
+              value={cardNumber}
+              onChangeText={setCardNumber}
+              keyboardType="numeric"
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Expiry Date (MM/YY)"
+              value={expiryDate}
+              onChangeText={setExpiryDate}
+              keyboardType="numeric"
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="CVV"
+              value={cvv}
+              onChangeText={setCvv}
+              keyboardType="numeric"
+            />
+
+            <TouchableOpacity style={styles.button} onPress={handleSubscriptionPayment}>
+              <Text style={styles.buttonText}>Pay Now</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={() => setIsSubscriptionModalVisible(false)}
+            >
+              <Text style={styles.buttonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </View>
   );
 };
 
@@ -357,6 +358,12 @@ const styles = StyleSheet.create({
   updateButton: {
     padding: 15,
     backgroundColor: '#4CAF50',
+    borderRadius: 5,
+    marginBottom: 20,
+  },
+  logoutButton: {
+    padding: 15,
+    backgroundColor: '#f44336',
     borderRadius: 5,
     marginBottom: 20,
   },

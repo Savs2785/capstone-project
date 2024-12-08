@@ -90,6 +90,7 @@ const ProductDetailScreen = ({ route }) => {
         setReviewImage(uri);
       }
     } catch (error) {
+      console.error('Error picking image:', error);
     }
   };
 
@@ -112,6 +113,7 @@ const ProductDetailScreen = ({ route }) => {
         await uploadBytes(imageRef, blob);
         imageUrl = await getDownloadURL(imageRef);
       } catch (error) {
+        console.error('Error uploading image:', error);
         return Alert.alert('Error uploading image. Please try again.');
       }
     }
@@ -131,6 +133,7 @@ const ProductDetailScreen = ({ route }) => {
       setRating(0);
       setReviewImage(null);
     } catch (error) {
+      console.error('Error submitting review:', error);
       Alert.alert('Error submitting review. Please try again.');
     }
   };
