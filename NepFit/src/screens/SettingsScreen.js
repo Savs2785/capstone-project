@@ -48,7 +48,6 @@ const SettingsScreen = () => {
           }
         }
       } catch (error) {
-        console.error('Error fetching user data:', error);
       } finally {
         setLoading(false);
       }
@@ -77,7 +76,6 @@ const SettingsScreen = () => {
           alert('Profile updated successfully!');
         }
       } catch (error) {
-        console.error('Error updating profile:', error);
         alert('Error updating profile.');
       } finally {
         setLoading(false);
@@ -114,7 +112,6 @@ const SettingsScreen = () => {
       await signOut(auth);
       navigation.navigate('Login');
     } catch (error) {
-      console.error('Error logging out:', error);
       alert('Error logging out.');
     }
   };

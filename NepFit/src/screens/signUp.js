@@ -36,7 +36,6 @@ const SignUpScreen = ({ navigation }) => {
 
       Alert.alert('Sign Up Successful!', 'Welcome to the app!');
     } catch (error) {
-      console.error('Error during sign up:', error);
       Alert.alert('Sign Up Failed', error.message);
     } finally {
       setLoading(false);
